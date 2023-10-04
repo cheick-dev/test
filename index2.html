@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Démo de Partage d'Écran avec WebRTC</title>
+	</head>
+	<body>
+		<h1>Démo de Partage d'Écran avec WebRTC</h1>
+
+		<div>
+			<button id="startButton">Commencer le partage d'écran</button>
+		</div>
+
+		<div id="localVideoContainer">
+			<h2>Votre écran partagé</h2>
+			<video id="localVideo" autoplay></video>
+		</div>
+
+		<div id="remoteVideoContainer">
+			<h2>Écran partagé par l'autre utilisateur</h2>
+			<video id="remoteVideo" autoplay></video>
+		</div>
+
+		<script src="https://cdn.jsdelivr.net/npm/simple-peer@9.0.0/simplepeer.min.js"></script>
+		<script>
+			const startButton = document.getElementById("startButton");
+			const localVideo = document.getElementById("localVideo");
+			const remoteVideo = document.getElementById("remoteVideo");
+
+			startButton.addEventListener("click", async () => {
+				try {
+					// Obtenir l'accès au partage d'écran
+					const stream = await navigator.mediaDevices.getDisplayMedia(
+						{ video: true }
+					);
+
+					// Afficher le partage d'écran local
+					localVideo.srcObject = stream;
+
+					// Créer une connexion WebRTC
+					const peer = new SimplePeer({ initiator: true, stream });
+
+					// Lorsque la connexion est établie, envoyer le stream à l'autre utilisateur
+					peer.on("signal", (data) => {
+						// Copier la chaîne de signal dans le presse-papiers et partagez-la avec l'autre utilisateur
+						navigator.clipboard.writeText(JSON.stringify(data));
+					});
+
+					// Recevoir la chaîne de signal de l'autre utilisateur
+					const signalFromOtherUser = prompt(
+						"Entrez la chaîne de signal de l'autre utilisateur :"
+					);
+
+					// Ajouter la chaîne de signal de l'autre utilisateur à la connexion
+					peer.signal(JSON.parse(signalFromOtherUser));
+
+					// Afficher le stream de l'autre utilisateur
+					peer.on("stream", (remoteStream) => {
+						remoteVideo.srcObject = remoteStream;
+					});
+				} catch (error) {
+					console.error("Erreur lors du partage d'écran :", error);
+				}
+			});
+		</script>
+	</body>
+</html>
