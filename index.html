@@ -1,31 +1,19 @@
+<!-- Index.html (pour l'émetteur) -->
 <!DOCTYPE html>
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Démo de Partage d'Écran avec WebRTC</title>
+		<title>Émetteur</title>
 	</head>
 	<body>
-		<h1>Démo de Partage d'Écran avec WebRTC</h1>
+		<h1>Émetteur</h1>
 
-		<div>
-			<button id="startButton">Commencer le partage d'écran</button>
-		</div>
+		<button id="startButton">Commencer le partage d'écran</button>
 
-		<div id="localVideoContainer">
-			<h2>Votre écran partagé</h2>
-			<video id="localVideo" autoplay></video>
-		</div>
-
-		<div id="remoteVideoContainer">
-			<h2>Écran partagé par l'autre utilisateur</h2>
-			<video id="remoteVideo" autoplay></video>
-		</div>
-
+		<script src="https://cdn.jsdelivr.net/npm/simple-peer@9.0.0/simplepeer.min.js"></script>
 		<script>
 			const startButton = document.getElementById("startButton");
-			const localVideo = document.getElementById("localVideo");
-			const remoteVideo = document.getElementById("remoteVideo");
 
 			startButton.addEventListener("click", async () => {
 				try {
@@ -34,49 +22,22 @@
 						{ video: true }
 					);
 
-					// Afficher le partage d'écran local
-					localVideo.srcObject = stream;
-
 					// Créer une connexion WebRTC
-					const peerConnection = new RTCPeerConnection();
+					const peer = new SimplePeer({ initiator: true, stream });
 
-					// Ajouter le partage d'écran local à la connexion
-					stream.getTracks().forEach((track) => {
-						peerConnection.addTrack(track, stream);
+					// Échange de la chaîne de signal avec l'autre utilisateur
+					peer.on("signal", (data) => {
+						// Affichez la chaîne de signal dans la console de l'émetteur
+						console.log("Chaîne de signal de l'émetteur :");
+						console.log(JSON.stringify(data));
 					});
 
-					// Créer une offre de connexion
-					const offer = await peerConnection.createOffer();
-					await peerConnection.setLocalDescription(offer);
-
-					// Envoyer l'offre à l'autre utilisateur (simulé ici)
-					async function t() {
-						// Simulez la réception de l'offre par l'autre utilisateur
-						const receivedOffer = offer;
-
-						// Créer une connexion WebRTC pour l'autre utilisateur
-						const remotePeerConnection = new RTCPeerConnection();
-
-						// Définir l'offre reçue comme description distante
-						remotePeerConnection.setRemoteDescription(
-							receivedOffer
+					// Attendez que la connexion soit établie
+					peer.on("connect", () => {
+						console.log(
+							"Connexion établie, partagez la chaîne de signal avec le récepteur."
 						);
-
-						// Créer une réponse à l'offre
-						const answer =
-							await remotePeerConnection.createAnswer();
-						await remotePeerConnection.setLocalDescription(answer);
-
-						// Simulez l'envoi de la réponse à l'autre utilisateur
-						setTimeout(() => {
-							// Simulez la réception de la réponse par l'utilisateur local
-							const receivedAnswer = answer;
-
-							// Définir la réponse reçue comme description distante
-							peerConnection.setRemoteDescription(receivedAnswer);
-						}, 2000);
-					}
-					setTimeout(t, 2000);
+					});
 				} catch (error) {
 					console.error("Erreur lors du partage d'écran :", error);
 				}

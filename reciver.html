@@ -1,0 +1,55 @@
+<!-- Receiver.html (pour le récepteur) -->
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Récepteur</title>
+	</head>
+	<body>
+		<h1>Récepteur</h1>
+
+		<textarea
+			id="signalInput"
+			placeholder="Collez la chaîne de signal ici"
+		></textarea>
+		<button id="connectButton">Se connecter à l'émetteur</button>
+
+		<video id="remoteVideo" autoplay></video>
+
+		<script src="https://cdn.jsdelivr.net/npm/simple-peer@9.0.0/simplepeer.min.js"></script>
+		<script>
+			const signalInput = document.getElementById("signalInput");
+			const connectButton = document.getElementById("connectButton");
+			const remoteVideo = document.getElementById("remoteVideo");
+
+			connectButton.addEventListener("click", async () => {
+				try {
+					// Parsez la chaîne de signal
+					const signalData = JSON.parse(signalInput.value);
+
+					// Créer une connexion WebRTC
+					const peer = new SimplePeer({ trickle: false });
+
+					// Ajoutez la chaîne de signal de l'émetteur
+					peer.signal(signalData);
+
+					// Attendez que la connexion soit établie
+					peer.on("connect", () => {
+						console.log("Connexion établie avec l'émetteur.");
+					});
+
+					// Affichez le flux vidéo de l'émetteur
+					peer.on("stream", (stream) => {
+						remoteVideo.srcObject = stream;
+					});
+				} catch (error) {
+					console.error(
+						"Erreur lors de la connexion au partage d'écran :",
+						error
+					);
+				}
+			});
+		</script>
+	</body>
+</html>
